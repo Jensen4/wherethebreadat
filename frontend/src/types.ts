@@ -13,11 +13,12 @@ export type PaymentInput = {
   amount_cents: number;
   currency: string;
   due_date: string;
-  status: 'pending' | 'paid';
+  status: "pending" | "paid";
   paid_date: string | null;
   notes: string | null;
 };
 export type Payment = PaymentInput & { id: string };
 export type Session = { id: string; email: string; csrf_token: string };
-export type Editor = { kind: 'paystub'; record?: Paystub } | { kind: 'payment'; record?: Payment };
-export type View = 'overview' | 'paystubs' | 'payments' | 'settings';
+export type Editor =
+  { kind: "paystub"; record?: Paystub } | { kind: "payment"; record?: Payment };
+export type View = "overview" | "paystubs" | "payments" | "settings";

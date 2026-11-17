@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 # psql reads secrets from the container environment, never command arguments.
-psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<'SQL'
+psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" << 'SQL'
 \set ON_ERROR_STOP on
 \getenv app_password APP_DB_PASSWORD
 \getenv migrator_password MIGRATOR_DB_PASSWORD
