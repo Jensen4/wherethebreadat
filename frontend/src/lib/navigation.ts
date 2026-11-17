@@ -7,6 +7,36 @@ export const pagePaths: Record<View, string> = {
   payments: "/payments",
   settings: "/settings",
 };
+export type AuthPage = "login" | "register";
+type Page = View | AuthPage;
+const paths: Record<Page, string> = {
+  ...pagePaths,
+  login: "/login",
+  register: "/register",
+};
+
+export function resolvePageUrl(
+  pathname: string,
+  search: string,
+  authenticated: boolean,
+): string {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  const isAuth = path === "/login" || path === "/register";
+  const isPrivate = Object.values(pagePaths).includes(path);
+  if (!authenticated) {
+    if (isAuth) return `${path}${search}`;
+    return isPrivate
+      ? `/login?${new URLSearchParams({ next: path })}`
+      : "/login";
+  }
+  if (isAuth) {
+    const next = new URLSearchParams(search).get("next");
+    return next && Object.values(pagePaths).includes(next)
+      ? next
+      : pagePaths.overview;
+  }
+  return isPrivate ? `${path}${search}` : pagePaths.overview;
+}
 
 export function viewFromPath(pathname: string): View {
   const path = pathname.replace(/\/+$/, "") || "/";
@@ -22,31 +52,37 @@ function subscribe(onChange: () => void) {
   return () => window.removeEventListener("popstate", onChange);
 }
 
-export function navigate(view: View) {
-  const path = pagePaths[view];
-  if (window.location.pathname === path) return;
-  window.history.pushState(null, "", path);
+export function navigate(page: Page, { replace = false, search = "" } = {}) {
+  const path = `${paths[page]}${search}`;
+  if (`${window.location.pathname}${window.location.search || ""}` === path)
+    return;
+  window.history[replace ? "replaceState" : "pushState"](null, "", path);
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
-export function usePageNavigation() {
-  const pathname = useSyncExternalStore(
+export function usePageNavigation(authenticated: boolean | null) {
+  const url = useSyncExternalStore(
     subscribe,
-    () => window.location.pathname,
+    () => `${window.location.pathname}${window.location.search}`,
   );
-  const view = viewFromPath(pathname);
+  const queryIndex = url.indexOf("?");
+  const pathname = queryIndex === -1 ? url : url.slice(0, queryIndex);
+  const search = queryIndex === -1 ? "" : url.slice(queryIndex);
+  const resolved =
+    authenticated === null
+      ? url
+      : resolvePageUrl(pathname, search, authenticated);
+  const resolvedPath = resolved.split("?")[0];
+  const view = viewFromPath(resolvedPath);
+  const authPage: AuthPage =
+    resolvedPath === "/register" ? "register" : "login";
 
   useEffect(() => {
-    // Use one canonical URL for each page, including the root and unknown paths.
-    if (pathname !== pagePaths[view]) {
-      window.history.replaceState(
-        null,
-        "",
-        `${pagePaths[view]}${window.location.search}${window.location.hash}`,
-      );
+    if (authenticated !== null && url !== resolved) {
+      window.history.replaceState(null, "", resolved);
       window.dispatchEvent(new PopStateEvent("popstate"));
     }
-  }, [pathname, view]);
+  }, [authenticated, url, resolved]);
 
-  return [view, navigate] as const;
+  return [view, navigate, authPage] as const;
 }

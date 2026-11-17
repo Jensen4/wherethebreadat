@@ -93,8 +93,10 @@ npm run dev
 Open http://127.0.0.1:5173. Create an account or sign in, then add paystubs and payments.
 
 Pages have their own URLs: `/overview`, `/paystubs`, `/payments`, and `/settings`.
-Direct links open the requested page after sign-in, and browser back/forward navigation
-works between pages. `/` and unknown paths redirect to `/overview`. Vite serves these
+Sign-in and account creation use `/login` and `/register`. Signed-out visitors default
+to `/login`; private page links preserve their destination through sign-in. Signed-in
+visitors default to `/overview` and are redirected away from the auth pages. Browser
+back/forward navigation works between pages. Vite serves these
 URLs in development and preview. When hosting the production build, configure the
 web server to serve `index.html` for page paths (for example, Nginx
 `try_files $uri $uri/ /index.html;`), while routing `/api` to the backend.

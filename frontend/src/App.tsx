@@ -39,7 +39,9 @@ export default function App() {
   const [notice, setNotice] = useState("");
   const [checkingSession, setCheckingSession] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
-  const [view, navigate] = usePageNavigation();
+  const [view, navigate, authPage] = usePageNavigation(
+    checkingSession ? null : !!session,
+  );
   const [month, setMonth] = useState(today().slice(0, 7));
   const [preferredCurrency, setPreferredCurrency] = useState(
     readCurrencyPreference,
@@ -122,9 +124,12 @@ export default function App() {
     try {
       await api.logout(session.csrf_token);
       clearSession();
+      navigate("login", { replace: true });
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) clearSession();
-      else
+      if (err instanceof ApiError && err.status === 401) {
+        clearSession();
+        navigate("login", { replace: true });
+      } else
         setActionError(
           err instanceof Error
             ? err.message
@@ -240,7 +245,14 @@ export default function App() {
         <p>Opening your space…</p>
       </main>
     );
-  if (!session) return <Auth onLogin={onLogin} notice={notice} />;
+  if (!session)
+    return (
+      <Auth
+        register={authPage === "register"}
+        onLogin={onLogin}
+        notice={notice}
+      />
+    );
   const titles = {
     overview: "A little clarity. A lot of possibility.",
     paystubs: "Make every payday count.",
@@ -274,7 +286,7 @@ export default function App() {
             <a
               key={id}
               href={pagePaths[id]}
-              className={`nav-item ${view === id ? "active" : ""}`}
+              className={`nav-item ${view === id ? "active" : ""} ${id === "settings" ? "mobile-settings" : ""}`}
               aria-current={view === id ? "page" : undefined}
               onClick={(event) => {
                 if (
@@ -305,6 +317,27 @@ export default function App() {
             </strong>
             <p>Knowing your money is a pretty good place to start.</p>
           </div>
+          <a
+            href={pagePaths.settings}
+            className={`nav-item ${view === "settings" ? "active" : ""}`}
+            aria-current={view === "settings" ? "page" : undefined}
+            onClick={(event) => {
+              if (
+                event.button !== 0 ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey
+              )
+                return;
+              event.preventDefault();
+              navigate("settings");
+            }}
+          >
+            <SettingsIcon size={19} strokeWidth={1.7} />
+            <span>Settings</span>
+            {view === "settings" && <span className="nav-active-dot" />}
+          </a>
           <button className="nav-item" onClick={() => setHelp(true)}>
             <CircleHelp size={18} />A little help
           </button>
@@ -313,7 +346,7 @@ export default function App() {
               {session.email.slice(0, 1).toUpperCase()}
             </span>
             <div>
-              <strong>Your personal space</strong>
+              <strong>Your Personal Space</strong>
               <span title={session.email}>{session.email}</span>
             </div>
             <button
@@ -335,9 +368,7 @@ export default function App() {
             <ChevronRight size={14} />
             <strong>{nav.find((n) => n.id === view)?.label}</strong>
           </div>
-          <span className="topbar-note">
-            <span className="tiny-dot" /> A little more peace of mind.
-          </span>
+          <span className="topbar-note"></span>
           <button
             className="mobile-signout icon-button"
             aria-label="Sign out"
@@ -493,7 +524,6 @@ export default function App() {
           )}
           <footer className="page-footer">
             <span>where the bread at.</span>
-            <span>Made for the everyday.</span>
           </footer>
         </main>
       </div>

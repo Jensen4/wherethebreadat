@@ -3,16 +3,19 @@ import { ArrowRight, Check, Eye, EyeOff, Sprout } from "lucide-react";
 import { api } from "../lib/api";
 import type { Session } from "../types";
 import { Brand } from "./Brand";
+import { navigate } from "../lib/navigation";
 
 export function Auth({
   onLogin,
   notice,
+  register,
 }: {
   onLogin: (session: Session) => void;
   notice: string;
+  register: boolean;
 }) {
-  const [register, setRegister] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,12 +24,23 @@ export function Auth({
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email")).trim();
     const password = String(form.get("password"));
+    if (register && password !== String(form.get("confirm_password"))) {
+      setError(
+        "Passwords don’t match. Please enter the same password in both fields.",
+      );
+      const confirmation =
+        event.currentTarget.elements.namedItem("confirm_password");
+      if (confirmation instanceof HTMLInputElement) confirmation.focus();
+      return;
+    }
     setBusy(true);
     setError("");
     try {
-      if (register) await api.register(email, password);
-      // If registration succeeds but login fails, offer login instead of registering again.
-      setRegister(false);
+      if (register) {
+        await api.register(email, password);
+        // Offer sign-in if the account was created but automatic login fails.
+        navigate("login", { replace: true, search: window.location.search });
+      }
       const result = await api.login(email, password);
       onLogin(result);
     } catch (err) {
@@ -121,6 +135,39 @@ export function Auth({
                 </button>
               </div>
             </label>
+            {register && (
+              <label>
+                Confirm password
+                <div className="password-field">
+                  <input
+                    autoComplete="off"
+                    name="confirm_password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Enter your password again"
+                    required
+                    minLength={12}
+                    maxLength={128}
+                    disabled={busy}
+                  />
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label={
+                      showConfirmPassword
+                        ? "Hide confirmed password"
+                        : "Show confirmed password"
+                    }
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
+              </label>
+            )}
             {error && (
               <p className="error" role="alert">
                 {error}
@@ -137,16 +184,34 @@ export function Auth({
           </form>
           <p className="auth-switch">
             {register ? "Already keeping track?" : "New around here?"}{" "}
-            <button
+            <a
               className="text-button"
-              disabled={busy}
-              onClick={() => {
-                setRegister(!register);
+              href={`${register ? "/login" : "/register"}${window.location.search}`}
+              aria-disabled={busy}
+              onClick={(event) => {
+                if (busy) {
+                  event.preventDefault();
+                  return;
+                }
+                if (
+                  event.button !== 0 ||
+                  event.metaKey ||
+                  event.ctrlKey ||
+                  event.shiftKey ||
+                  event.altKey
+                )
+                  return;
+                event.preventDefault();
+                navigate(register ? "login" : "register", {
+                  search: window.location.search,
+                });
                 setError("");
+                setShowPassword(false);
+                setShowConfirmPassword(false);
               }}
             >
               {register ? "Sign in" : "Create an account"}
-            </button>
+            </a>
           </p>
           <div className="auth-note">
             <span className="tiny-dot" /> Your own space for your pay and
