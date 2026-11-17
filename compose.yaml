@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: bread_admin
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Run python backend/scripts/setup_local.py first}
+      POSTGRES_DB: bread
+      APP_DB_PASSWORD: ${POSTGRES_APP_PASSWORD:?Run python backend/scripts/setup_local.py first}
+      MIGRATOR_DB_PASSWORD: ${POSTGRES_MIGRATOR_PASSWORD:?Run python backend/scripts/setup_local.py first}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-app.sh:/docker-entrypoint-initdb.d/init-app.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bread_admin -d bread"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
