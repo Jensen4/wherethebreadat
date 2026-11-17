@@ -4,8 +4,8 @@ import { api } from '../lib/api';
 import { money, today, toCents } from '../lib/money';
 import type { Editor } from '../types';
 
-export function RecordEditor({ editor, csrfToken, onClose, onSaved, onError }: {
-  editor: Editor; csrfToken: string; onClose: () => void; onSaved: () => void; onError: (error: unknown) => void;
+export function RecordEditor({ defaultCurrency = 'CAD', editor, csrfToken, onClose, onSaved, onError }: {
+  defaultCurrency?: string; editor: Editor; csrfToken: string; onClose: () => void; onSaved: () => void; onError: (error: unknown) => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [busy, setBusy] = useState(false);
@@ -14,7 +14,7 @@ export function RecordEditor({ editor, csrfToken, onClose, onSaved, onError }: {
   const payment = editor.kind === 'payment' ? editor.record : undefined;
   const [gross, setGross] = useState(paystub ? (paystub.gross_cents / 100).toFixed(2) : '');
   const [deductions, setDeductions] = useState(paystub ? (paystub.deductions_cents / 100).toFixed(2) : '0.00');
-  const [currency, setCurrency] = useState(editor.record?.currency ?? 'CAD');
+  const [currency, setCurrency] = useState(editor.record?.currency ?? defaultCurrency);
   const [status, setStatus] = useState(payment?.status ?? 'pending');
   useEffect(() => {
     const dialog = ref.current!;

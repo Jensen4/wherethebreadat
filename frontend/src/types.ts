@@ -20,4 +20,4 @@ export type PaymentInput = {
 export type Payment = PaymentInput & { id: string };
 export type Session = { id: string; email: string; csrf_token: string };
 export type Editor = { kind: 'paystub'; record?: Paystub } | { kind: 'payment'; record?: Payment };
-export type View = 'overview' | 'paystubs' | 'payments';
+export type View = 'overview' | 'paystubs' | 'payments' | 'settings';
