@@ -91,6 +91,13 @@ npm run dev
 ```
 
 Open http://127.0.0.1:5173. Create an account or sign in, then add paystubs and payments.
+
+Pages have their own URLs: `/overview`, `/paystubs`, `/payments`, and `/settings`.
+Direct links open the requested page after sign-in, and browser back/forward navigation
+works between pages. `/` and unknown paths redirect to `/overview`. Vite serves these
+URLs in development and preview. When hosting the production build, configure the
+web server to serve `index.html` for page paths (for example, Nginx
+`try_files $uri $uri/ /index.html;`), while routing `/api` to the backend.
 The React + TypeScript app uses Vite, custom responsive CSS, and Lucide icons. It includes
 a monthly overview, six-month income/payment chart, currency selection, searchable
 records, payment status filters, create/edit/delete forms, and marking payments paid.
@@ -128,17 +135,17 @@ Google Fonts supplies DM Sans and Manrope, with local sans-serif fallbacks when 
 
 ## API
 
-| Path | Methods | Purpose |
-| --- | --- | --- |
-| `/health` | GET | Process health (does not check database connectivity) |
-| `/api/auth/register` | POST | Create account |
-| `/api/auth/login` | POST | Set session cookie; return identity and CSRF token |
-| `/api/auth/session` | GET | Restore identity and CSRF token |
-| `/api/auth/logout` | POST | Revoke session and clear cookie |
-| `/api/paystubs` | GET, POST | List/create paystubs |
-| `/api/paystubs/{id}` | GET, PUT, DELETE | Read/replace/delete own paystub |
-| `/api/payments` | GET, POST | List/create payments |
-| `/api/payments/{id}` | GET, PUT, DELETE | Read/replace/delete own payment |
+| Path                 | Methods          | Purpose                                               |
+| -------------------- | ---------------- | ----------------------------------------------------- |
+| `/health`            | GET              | Process health (does not check database connectivity) |
+| `/api/auth/register` | POST             | Create account                                        |
+| `/api/auth/login`    | POST             | Set session cookie; return identity and CSRF token    |
+| `/api/auth/session`  | GET              | Restore identity and CSRF token                       |
+| `/api/auth/logout`   | POST             | Revoke session and clear cookie                       |
+| `/api/paystubs`      | GET, POST        | List/create paystubs                                  |
+| `/api/paystubs/{id}` | GET, PUT, DELETE | Read/replace/delete own paystub                       |
+| `/api/payments`      | GET, POST        | List/create payments                                  |
+| `/api/payments/{id}` | GET, PUT, DELETE | Read/replace/delete own payment                       |
 
 List endpoints support `limit` (1–100, default 50) and `offset`. PUT replaces all input
 fields. Client-supplied ownership fields are ignored; ownership comes from the authenticated session.
